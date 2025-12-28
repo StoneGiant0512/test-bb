@@ -5,6 +5,12 @@ require('dotenv').config({ path: '.env.production'});
 const { initializeDatabase } = require('./setup/setup');
 const routes = require('./routes');
 
+app.use(cors({
+  origin: '*', // Allow all origins (change to specific URL in production)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: false, // Set to true if you need cookies
+}));
 const app = express();
 const PORT = process.env.PORT || 5000;
 
