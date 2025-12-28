@@ -11,11 +11,22 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: '*',
+  origin: '*', // Allow all origins
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: false,
+  preflightContinue: false, // Important: don't pass preflight to next handler
+  optionsSuccessStatus: 204, // Some legacy browsers (IE11) choke on 204
 }));
-app.options('*', cors());
+
+// Explicitly handle OPTIONS requests for all routes
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.sendStatus(204);
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
