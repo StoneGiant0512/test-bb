@@ -8,6 +8,8 @@ Backend API for the Mini SaaS Dashboard project management system.
 - **Express.js** - Web framework
 - **PostgreSQL** - Relational database
 - **pg** - PostgreSQL client for Node.js
+- **JWT** - JSON Web Tokens for authentication
+- **bcryptjs** - Password hashing
 
 ## Project Structure
 
@@ -16,11 +18,16 @@ backend/
 ├── config/
 │   └── database.js          # Database connection and configuration
 ├── controllers/
-│   └── projectController.js # Business logic and request handling
+│   ├── projectController.js # Business logic and request handling
+│   └── authController.js   # Authentication business logic
+├── middleware/
+│   └── auth.js              # JWT authentication middleware
 ├── routes/
-│   └── projectRoutes.js     # API route definitions
+│   ├── projectRoutes.js     # API route definitions
+│   └── authRoutes.js        # Authentication route definitions
 ├── services/
-│   └── projectService.js    # Database operations
+│   ├── projectService.js    # Database operations
+│   └── authService.js       # Authentication database operations
 ├── seeders/
 │   └── seedProjects.js      # Database seeding script
 ├── server.js                 # Express server entry point
@@ -52,6 +59,9 @@ DB_PASSWORD=your_password_here
 
 PORT=5000
 NODE_ENV=development
+
+# JWT Secret (change this to a strong random string in production)
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production-min-32-chars
 ```
 
 3. Create the PostgreSQL database:
@@ -82,6 +92,95 @@ This will:
 - Insert 15 sample projects with various statuses
 
 ## API Endpoints
+
+### Base URL
+```
+http://localhost:5000/api
+```
+
+## Authentication Endpoints
+
+### Register User
+```http
+POST /api/auth/register
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "password123",
+  "name": "John Doe"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "User registered successfully",
+  "data": {
+    "user": {
+      "id": 1,
+      "email": "user@example.com",
+      "name": "John Doe"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+}
+```
+
+### Login
+```http
+POST /api/auth/login
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "user": {
+      "id": 1,
+      "email": "user@example.com",
+      "name": "John Doe"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+}
+```
+
+### Get Current User (Protected)
+```http
+GET /api/auth/me
+Authorization: Bearer <token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "email": "user@example.com",
+    "name": "John Doe",
+    "created_at": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+## Project Endpoints
 
 ### Base URL
 ```
@@ -207,6 +306,24 @@ DELETE /api/projects/:id
   "success": true,
   "message": "Project deleted successfully"
 }
+```
+
+## Authentication
+
+The API uses JWT (JSON Web Tokens) for authentication. To access protected routes:
+
+1. Register or login to get a JWT token
+2. Include the token in the Authorization header: `Authorization: Bearer <token>`
+3. Tokens expire after 7 days
+
+### Password Requirements
+- Minimum 6 characters
+- Stored as bcrypt hash (never in plain text)
+
+### Token Format
+Tokens are sent in the Authorization header:
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 ## Project Model
