@@ -82,7 +82,6 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log("body", req.body)
     // Validation
     if (!email || !password) {
       return res.status(400).json({
@@ -115,7 +114,6 @@ const login = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
-    console.log("here is before response")
     res.status(200).json({
       success: true,
       message: 'Login successful',
