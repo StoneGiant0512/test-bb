@@ -43,8 +43,30 @@ const createTable = async () => {
   }
 };
 
+// Create users table if it doesn't exist
+const createUsersTable = async () => {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      password VARCHAR(255) NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  try {
+    await pool.query(createTableQuery);
+    console.log('Users table created or already exists');
+  } catch (error) {
+    console.error('Error creating users table:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   pool,
   createTable,
+  createUsersTable,
 };
 
