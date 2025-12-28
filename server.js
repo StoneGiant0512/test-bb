@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+require('dotenv').config({ path: '.env.production'});
 
 const { initializeDatabase } = require('./setup/setup');
 const routes = require('./routes');
@@ -56,7 +56,7 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`API endpoint: http://localhost:${PORT}/api/projects`);
+  // console.log(`API endpoint: http://localhost:${PORT}/api/projects`);
 });
 
 module.exports = app;
