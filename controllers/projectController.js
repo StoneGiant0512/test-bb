@@ -1,8 +1,12 @@
 const projectService = require('../services/projectService');
 
 /**
- * Get all projects with optional filtering
+ * Get all projects with optional filtering and pagination
  * @route GET /api/projects
+ * @query page - Page number (default: 1)
+ * @query limit - Items per page (default: 10)
+ * @query sortBy - Field to sort by (default: created_at)
+ * @query sortOrder - Sort order: asc or desc (default: desc)
  */
 const getAllProjects = async (req, res) => {
   try {
@@ -11,12 +15,20 @@ const getAllProjects = async (req, res) => {
       search: req.query.search,
     };
 
-    const projects = await projectService.getAllProjects(filters);
+    const pagination = {
+      page: req.query.page || 1,
+      limit: req.query.limit || 10,
+      sortBy: req.query.sortBy || 'created_at',
+      sortOrder: req.query.sortOrder || 'DESC',
+    };
+
+    const result = await projectService.getAllProjects(filters, pagination);
     
     res.status(200).json({
       success: true,
-      count: projects.length,
-      data: projects,
+      count: result.pagination.totalCount,
+      data: result.projects,
+      pagination: result.pagination,
     });
   } catch (error) {
     console.error('Error in getAllProjects controller:', error);

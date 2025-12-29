@@ -1,19 +1,22 @@
 const { pool } = require('../config/database');
 
 /**
- * Get all projects from the database
+ * Get all projects from the database with pagination
  * @param {Object} filters - Optional filters (status, search)
- * @returns {Promise<Array>} Array of project objects
+ * @param {Object} pagination - Pagination options (page, limit, sortBy, sortOrder)
+ * @returns {Promise<Object>} Object with projects array and pagination metadata
  */
-const getAllProjects = async (filters = {}) => {
+const getAllProjects = async (filters = {}, pagination = {}) => {
   try {
     let query = 'SELECT * FROM projects WHERE 1=1';
+    let countQuery = 'SELECT COUNT(*) FROM projects WHERE 1=1';
     const params = [];
     let paramCount = 1;
 
     // Filter by status if provided
     if (filters.status && filters.status !== 'all') {
       query += ` AND status = $${paramCount}`;
+      countQuery += ` AND status = $${paramCount}`;
       params.push(filters.status);
       paramCount++;
     }
@@ -21,14 +24,47 @@ const getAllProjects = async (filters = {}) => {
     // Search by name or assigned team member if provided
     if (filters.search) {
       query += ` AND (name ILIKE $${paramCount} OR assigned_team_member ILIKE $${paramCount})`;
+      countQuery += ` AND (name ILIKE $${paramCount} OR assigned_team_member ILIKE $${paramCount})`;
       params.push(`%${filters.search}%`);
       paramCount++;
     }
 
-    query += ' ORDER BY created_at DESC';
+    // Get total count
+    const countResult = await pool.query(countQuery, params);
+    const totalCount = parseInt(countResult.rows[0].count);
+
+    // Sorting
+    const sortBy = pagination.sortBy || 'created_at';
+    const sortOrder = pagination.sortOrder || 'DESC';
+    const validSortFields = ['name', 'status', 'deadline', 'assigned_team_member', 'budget', 'created_at'];
+    const safeSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_at';
+    const safeSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+    
+    query += ` ORDER BY ${safeSortBy} ${safeSortOrder}`;
+
+    // Pagination
+    const page = parseInt(pagination.page) || 1;
+    const limit = parseInt(pagination.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    query += ` LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
+    params.push(limit, offset);
 
     const result = await pool.query(query, params);
-    return result.rows;
+    
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      projects: result.rows,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
   } catch (error) {
     console.error('Error fetching projects:', error);
     throw error;
